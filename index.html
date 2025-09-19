@@ -1,0 +1,236 @@
+<!DOCTYPE html><html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>افکت فشفشه پیشرفته — اصلاح‌شده توسط کاربر</title>
+    <link href="https://v1.fontapi.ir/css/Vazir" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-user-select: none; -moz-user-select: none; user-select: none; }
+        html, body { height: 100%; }
+        body {
+            /* پس‌زمینه سفید طبق درخواست */
+            background: #ffffff;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            font-family: Vazir, Tahoma, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #111;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 6vh;
+            width: 100%;
+            padding: 4vh 0;
+        }
+        .square {
+            width: min(75vw, 720px);
+            height: min(75vw, 720px);
+            background-color: #000;
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+            border: 2px solid #333;
+            display: block;
+        }
+        .rocket {
+            position: absolute;
+            bottom: 6%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 28px;
+            height: 64px;
+            z-index: 20;
+            will-change: transform, opacity;
+        }
+        .rocket svg { width: 100%; height: 100%; display: block; }.fire {
+        position: absolute;
+        width: 18px;
+        height: 34px;
+        left: 50%;
+        bottom: 2%;
+        transform: translateX(-50%);
+        border-radius: 50% 50% 20% 20%;
+        filter: blur(2px);
+        z-index: 15;
+        will-change: transform, opacity;
+        background: radial-gradient(ellipse at center, rgba(255,240,200,0.95) 0%, rgba(255,180,0,1) 12%, rgba(255,90,0,0.95) 30%, rgba(255,40,0,0) 70%);
+    }
+
+    .smoke { position: absolute; border-radius: 50%; opacity: 0.6; filter: blur(6px); z-index: 14; will-change: transform, opacity; }
+
+    .explosion-flash { position: absolute; border-radius: 50%; pointer-events: none; z-index: 30; will-change: transform, opacity; }
+    .particle { position: absolute; font-weight: 700; pointer-events: none; z-index: 31; white-space: nowrap; }
+
+    /* دکمه: فونت Vazir را صریحاً اضافه کردم */
+    .click-btn {
+        width: min(75vw, 720px);
+        height: 6vh;
+        background-color: #000;
+        color: #fff;
+        border: none;
+        border-radius: 12px;
+        font-size: 1.4rem;
+        cursor: pointer;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        font-family: Vazir, Tahoma, sans-serif;
+    }
+    .click-btn:active { transform: scale(0.98); }
+
+    @media (max-height: 600px) {
+        .container { gap: 4vh; }
+        .click-btn { height: 5vh; font-size: 1.1rem; }
+    }
+</style>
+
+</head>
+<body>
+    <div class="container">
+        <div class="square" id="square"></div>
+        <button class="click-btn" id="firework-btn">کلیک کن</button>
+    </div><script>
+document.addEventListener('DOMContentLoaded', function() {
+    const square = document.getElementById('square');
+    const btn = document.getElementById('firework-btn');
+
+    document.addEventListener('touchstart', function(e) { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+    document.addEventListener('gesturestart', function(e) { e.preventDefault(); });
+    document.addEventListener('wheel', function(e) { if (e.ctrlKey) e.preventDefault(); }, { passive: false });
+
+    btn.addEventListener('click', createFirework);
+
+    function createFirework() {
+        const old = square.querySelectorAll('.rocket, .fire, .smoke, .explosion-flash, .particle');
+        old.forEach(o => o.remove());
+
+        const rocket = document.createElement('div'); rocket.className = 'rocket';
+        rocket.innerHTML = `
+            <svg viewBox="0 0 64 160" xmlns="http://www.w3.org/2000/svg" aria-label="rocket">
+                <defs>
+                    <linearGradient id="bodyGrad" x1="0" x2="1" y1="0" y2="1">
+                        <stop offset="0" stop-color="#bfbfbf" />
+                        <stop offset="1" stop-color="#8f8f8f" />
+                    </linearGradient>
+                </defs>
+                <!-- نوک تیز -->
+                <path d="M32 2 L44 28 L20 28 Z" fill="#3b3b3b" />
+                <!-- بدنه اصلی (بدون توپ قرمز) -->
+                <rect x="20" y="28" width="24" height="70" rx="10" fill="url(#bodyGrad)" stroke="#666" stroke-width="0.8" />
+                <!-- انتهای موتور -->
+                <rect x="22" y="94" width="20" height="26" rx="4" fill="#333" />
+                <!-- بالچه‌ها -->
+                <path d="M20 70 L6 86 L20 88 Z" fill="#2f2f2f" />
+                <path d="M44 70 L58 86 L44 88 Z" fill="#2f2f2f" />
+                <!-- جزئیات خطوط -->
+                <rect x="28" y="44" width="8" height="18" rx="3" fill="#6e6e6e" opacity="0.9" />
+            </svg>
+        `;
+
+        const fire = document.createElement('div'); fire.className = 'fire';
+        const smoke1 = document.createElement('div'); smoke1.className = 'smoke'; smoke1.style.width = '14px'; smoke1.style.height = '14px'; smoke1.style.left = 'calc(50% - 20px)'; smoke1.style.bottom = '8%'; smoke1.style.background = 'rgba(180,180,180,0.5)';
+        const smoke2 = document.createElement('div'); smoke2.className = 'smoke'; smoke2.style.width = '12px'; smoke2.style.height = '12px'; smoke2.style.left = 'calc(50% + 8px)'; smoke2.style.bottom = '8%'; smoke2.style.background = 'rgba(200,200,200,0.48)';
+
+        square.appendChild(rocket); square.appendChild(fire); square.appendChild(smoke1); square.appendChild(smoke2);
+
+        const rect = square.getBoundingClientRect();
+        const travelPx = Math.max(10, Math.round(rect.height * 0.78));
+        const duration = 10000; // حرکت یکنواخت، آهسته
+
+        // حرکت یکنواخت راکت
+        const rocketAnim = rocket.animate([
+            { transform: 'translateX(-50%) translateY(0)', opacity: 1 },
+            { transform: `translateX(-50%) translateY(-${travelPx}px)`, opacity: 1 }
+        ], { duration: duration, easing: 'linear', fill: 'forwards' });
+
+        // شعله نزدیک بدنه باشه: کاهش فاصله-نسبت به راکت (نه اینکه جدا بشه)
+        const fireAnim = fire.animate([
+            { transform: 'translateX(-50%) translateY(0) scale(1)', opacity: 1 },
+            { transform: `translateX(-50%) translateY(-${Math.round(travelPx*0.92)}px) scale(0.98)`, opacity: 0.95 }
+        ], { duration: duration, easing: 'linear', fill: 'forwards' });
+
+        // دود با مقداری دنبال‌کنندگی
+        smoke1.animate([
+            { transform: 'translateY(0) translateX(0)', opacity: 0.6 },
+            { transform: `translateY(-${Math.round(travelPx * 0.58)}px) translateX(-12px)`, opacity: 0.14 }
+        ], { duration: duration, easing: 'cubic-bezier(0.3,0.8,0.2,1)', fill: 'forwards' });
+
+        smoke2.animate([
+            { transform: 'translateY(0) translateX(0)', opacity: 0.55 },
+            { transform: `translateY(-${Math.round(travelPx * 0.59)}px) translateX(12px)`, opacity: 0.11 }
+        ], { duration: duration, easing: 'cubic-bezier(0.3,0.8,0.2,1)', fill: 'forwards' });
+
+        // وقتی حرکت کامل شد انفجار یکم پایین‌تر ثبت می‌شود (تا پیش از خروج از مربع رخ دهد)
+        rocketAnim.finished.then(() => {
+            const r = rocket.getBoundingClientRect();
+            const s = square.getBoundingClientRect();
+            // موقعیت انفجار را کمی پایین‌تر از نوک قرار می‌دهیم (10% از ارتفاع راکت زیر نوک)
+            const x = (r.left + r.width/2) - s.left;
+            const y = (r.top + Math.round(r.height * 0.12)) - s.top; // پایین‌تر از نوک
+
+            [rocket, fire, smoke1, smoke2].forEach(el => { if (el && el.parentNode) el.parentNode.removeChild(el); });
+
+            // افزایش تعداد سلام به 30
+            createExplosionAt(x, y, 100);
+        });
+    }
+
+    function createExplosionAt(x, y, count) {
+        const flash = document.createElement('div'); flash.className = 'explosion-flash';
+        const size = Math.max(80, Math.round(Math.min(square.clientWidth, square.clientHeight) * 0.18));
+        flash.style.width = flash.style.height = size + 'px';
+        flash.style.left = (x - size/2) + 'px';
+        flash.style.top = (y - size/2) + 'px';
+        flash.style.background = 'radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.5) 40%, rgba(255,255,255,0.05) 70%, transparent 100%)';
+        flash.style.opacity = '0.95';
+        flash.style.transform = 'scale(0.5)';
+        square.appendChild(flash);
+
+        const flashAnim = flash.animate([
+            { transform: 'scale(0.5)', opacity: 0.95 },
+            { transform: 'scale(1.1)', opacity: 0.6 },
+            { transform: 'scale(1.6)', opacity: 0 }
+        ], { duration: 700, easing: 'cubic-bezier(0.2,0.8,0.2,1)', fill: 'forwards' });
+
+        const word = 'کیر شدی';
+        for (let i = 0; i < count; i++) {
+            const p = document.createElement('div'); p.className = 'particle';
+            p.textContent = word;
+            // فونت خواناتر و صریحاً Vazir برای متن سلام
+            p.style.fontFamily = 'Vazir, Tahoma, sans-serif';
+            p.style.fontSize = 'calc(0.9vh + 7px)';
+            p.style.color = '#fff';
+            p.style.left = x + 'px';
+            p.style.top = y + 'px';
+            p.style.opacity = 0;
+            square.appendChild(p);
+
+            // جهت و فاصله: پخش آهسته
+            const angle = (Math.random() * Math.PI * 2);
+            const distance = 40 + Math.random() * 120;
+            const dx = Math.cos(angle) * distance;
+            const dy = Math.sin(angle) * distance * 0.7;
+            const dur = 4200 + Math.random() * 1200;
+
+            const anim = p.animate([
+                { transform: 'translate(0,0) scale(0.9)', opacity: 0 },
+                { transform: `translate(${dx*0.3}px, ${dy*0.3}px) scale(1.05)`, opacity: 1, offset: 0.25 },
+                { transform: `translate(${dx}px, ${dy}px) scale(0.95)`, opacity: 0.9, offset: 0.7 },
+                { transform: `translate(${dx*1.2}px, ${dy*1.2}px) scale(0.6)`, opacity: 0 }
+            ], { duration: dur, easing: 'linear', fill: 'forwards' });
+
+            anim.finished.then(() => { if (p && p.parentNode) p.parentNode.removeChild(p); });
+        }
+
+        flashAnim.finished.then(() => { if (flash && flash.parentNode) flash.parentNode.removeChild(flash); });
+    }
+});
+</script>
+
+</body>
+</html>
